@@ -4,24 +4,10 @@ Build
 -----
 0. Install pre-required packages
    
-    $ sudo apt-get install cmake libopencv-dev
+    $ sudo apt-get install cmake 
 
 
-1. Place  Raspberry Pi userland project in /home/pi/src/raspberrypi/userland
-    
-    $ mkdir -p /home/pi/src/raspberrypi
-    
-    $ cd /home/pi/src/raspberrypi
-        
-    $ git clone --depth 1 https://github.com/raspberrypi/userland.git
-
-
-2. Build pre-required libraries
-    
-    $ make -C /opt/vc/src/hello_pi/libs/vgfont
-    
-
-3. Build project 
+1. Build project 
 
     $ mkdir build
     
@@ -32,4 +18,4 @@ Build
     $ make 
     
     
-4. use as ./mmal_opencv_modect > test.h264
+2. use as ./mmal_opencv_modect > test.mjpeg

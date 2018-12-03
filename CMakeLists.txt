@@ -11,12 +11,14 @@ include_directories(/opt/vc/include/interface/vmcs_host/linux)
 #include_directories(/opt/vc/src/hello_pi/libs/vgfont)
 
 link_directories(/opt/vc/lib)
-#link_directories(/opt/vc/src/hello_pi/libs/vgfont)
 
-add_executable(mmal_opencv_modect opencv_modect.c)
+#FIND_LIBRARY(RASPI_LIB /opt/vc/lib/)
+#set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /opt/vc/lib)
+#LINK_DIRECTORIES(/opt/vc/lib)
 
-#find_package( OpenCV REQUIRED )
 
-#target_link_libraries(mmal_opencv_modect mmal_core mmal_util mmal_vc_client vcos bcm_host cairo ${OpenCV_LIBS} vgfont openmaxil EGL)
-target_link_libraries(mmal_opencv_modect mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil EGL)
+add_executable(mmal_mjpeg_test mmal_mjpeg.c)
+
+#target_link_libraries(mmal_opencv_modect mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil EGL pthread rt)
+target_link_libraries(mmal_mjpeg_test mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil brcmEGL pthread rt)
 

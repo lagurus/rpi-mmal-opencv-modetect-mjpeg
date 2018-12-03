@@ -13,6 +13,8 @@
 #include "interface/mmal/mmal.h"
 #include "interface/mmal/util/mmal_default_components.h"
 #include "interface/mmal/util/mmal_connection.h"
+#include "interface/mmal/util/mmal_util.h"
+#include "interface/mmal/util/mmal_util_params.h"
 
 #define MMAL_CAMERA_PREVIEW_PORT 0
 #define MMAL_CAMERA_VIDEO_PORT 1
@@ -20,12 +22,12 @@
 
 #define CALC_FPS 1
 
-/*
+
 //FPS: OpenCV = 15.05, Video = 30.51, ~60% CPU
-#define VIDEO_FPS 30 
+/*#define VIDEO_FPS 30 
 #define VIDEO_WIDTH 1280
-#define VIDEO_HEIGHT 720
-*/
+#define VIDEO_HEIGHT 720*/
+
 
 //FPS: OpenCV = 14.90, Video = 30.02, ~75% CPU
 #define VIDEO_FPS 30 
@@ -114,7 +116,10 @@ static void camera_video_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T
       MMAL_BUFFER_HEADER_T *output_buffer = mmal_queue_get(userdata->encoder_input_pool->queue);
       if(output_buffer){
 	  
-		//fprintf(stderr,  "image: mmal_queue_get have valid buffer, output_buffer->data=0x%02X, output_buffer->length=%d, output_buffer->alloc_size=%d, buffer->length=%d \n", output_buffer->data, output_buffer->length, output_buffer->alloc_size, buffer->length );
+	  /*if( (CALC_FPS) && (frame_count % (VIDEO_FPS*2) == 0) )
+		  {
+			fprintf(stderr,  "image: mmal_queue_get have valid buffer, output_buffer->data=0x%02X, output_buffer->length=%d, output_buffer->alloc_size=%d, buffer->length=%d \n", output_buffer->data, output_buffer->length, output_buffer->alloc_size, buffer->length );
+		  }*/
 	  
         mmal_buffer_header_mem_lock(buffer);
         memcpy(output_buffer->data, buffer->data, buffer->length);
@@ -203,8 +208,8 @@ int setup_camera(PORT_USERDATA *userdata) {
     {
         MMAL_PARAMETER_CAMERA_CONFIG_T cam_config = {
             { MMAL_PARAMETER_CAMERA_CONFIG, sizeof (cam_config)},
-            .max_stills_w = 1280,
-            .max_stills_h = 720,
+            .max_stills_w = VIDEO_WIDTH,
+            .max_stills_h = VIDEO_HEIGHT,
             .stills_yuv422 = 0,
             .one_shot_stills = 1,
             .max_preview_video_w = VIDEO_WIDTH,
