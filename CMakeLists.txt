@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 
+
+set(CMAKE_BUILD_TYPE Debug)		## compile with debug symbols for gdb
+
 SET(COMPILE_DEFINITIONS -Werror)
 
 include_directories(/opt/vc/include)
@@ -17,8 +20,11 @@ link_directories(/opt/vc/lib)
 #LINK_DIRECTORIES(/opt/vc/lib)
 
 
-add_executable(mmal_mjpeg_test mmal_mjpeg.c)
+#add_executable(mmal_mjpeg_test mmal_mjpeg.c)
+add_executable(mmal_jpeg_test mmal_jpeg.c)
 
 #target_link_libraries(mmal_opencv_modect mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil EGL pthread rt)
-target_link_libraries(mmal_mjpeg_test mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil brcmEGL pthread rt)
+
+#target_link_libraries(mmal_mjpeg_test mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil brcmEGL pthread rt)
+target_link_libraries(mmal_jpeg_test mmal_core mmal_util mmal_vc_client vcos bcm_host openmaxil brcmEGL pthread rt)
 

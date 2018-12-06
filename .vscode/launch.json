@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Attach",
+            "type": "cppdbg",
+            "request": "launch",
+            "stopAtEntry": false,
+            "miDebuggerServerAddress": "192.168.1.10:6666",
+            "program": "${workspaceRoot}/build/mmal_jpeg_test",
+            "cwd": "${workspaceRoot}/build",
+            "environment": [],
+            "externalConsole": false,
+            "sourceFileMap": {
+                "/adata/src/stream/rpi-mmal-opencv-modetect-mjpeg": "${workspaceRoot}/"
+            },
+            // "preLaunchTask": "remote deploy",   
+            
+            "linux": {
+                "MIMode": "gdb",
+                "MIDebuggerPath": "/adata/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-gdb",
+                "setupCommands": [
+                    {
+                      "description": "Enable pretty-printing for gdb",
+                      "text": "-enable-pretty-printing",
+                      "ignoreFailures": true
+                    }
+                ]
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "windows": {
+                "MIMode": "gdb"
+            },
+            //"logging": {
+            //    "trace": true,
+            //    "traceResponse": true,
+            //    "engineLogging": true
+            //}
+        }
+    ]
+}

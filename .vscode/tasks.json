@@ -1,0 +1,47 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "remote make",
+            "type": "shell",
+            "command": "ssh xlaska@192.168.1.10 'cd /adata/src/stream/rpi-mmal-opencv-modetect-mjpeg/build/ ; make -j4' ",
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "remote clean",
+            "type": "shell",
+            "command": "ssh xlaska@192.168.1.10 'cd /adata/src/stream/rpi-mmal-opencv-modetect-mjpeg/build/ ; make clean' ",
+            "problemMatcher": []
+        },
+        {
+            "label": "remote debug background",
+            "type": "shell",
+            "command": "ssh xlaska@192.168.1.10 'killall gdbserver &> /dev/null ; cd /adata/src/stream/rpi-mmal-opencv-modetect-mjpeg/build/ ; gdbserver :6666 mmal_jpeg_test > test.mp4 >&- 2>&- <&- & ' ",
+            "problemMatcher": []
+        },
+        {
+            "label": "remote debug",
+            "type": "shell",
+            "command": "ssh xlaska@192.168.1.10 'killall gdbserver &> /dev/null ; cd /adata/src/stream/rpi-mmal-opencv-modetect-mjpeg/build/ ; gdbserver :6666 mmal_jpeg_test ' ",
+            "problemMatcher": []
+        }
+    ]
+}
+

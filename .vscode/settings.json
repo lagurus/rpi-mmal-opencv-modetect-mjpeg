@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "*.ipp": "cpp",
+        "initializer_list": "cpp",
+        "cstdarg": "cpp",
+        "tcpserver_mjpeg.h": "c"
+    },
+    "cmake.configureOnOpen": false
+}

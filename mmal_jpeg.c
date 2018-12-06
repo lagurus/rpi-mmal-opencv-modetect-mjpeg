@@ -72,16 +72,45 @@ int fill_port_buffer(MMAL_PORT_T *port, MMAL_POOL_T *pool)
     int q;
     int num = mmal_queue_length(pool->queue);
 
-    for (q = 0; q < num; q++) {
+    for (q = 0; q < num; q++)
+        {
         MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get(pool->queue);
-        if (!buffer) {
-            fprintf(stderr, "Unable to get a required buffer %d from pool queue\n", q);
-        }
 
-        if (mmal_port_send_buffer(port, buffer) != MMAL_SUCCESS) {
+        if (buffer)
+			{
+			if (mmal_port_send_buffer(port, buffer) != MMAL_SUCCESS)
+            	fprintf(stderr, "Unable to get a required buffer %d from pool queue\n", q);
+			}
+		else
+			{
             fprintf(stderr, "Unable to send a buffer to port (%d)\n", q);
+       	 	}
         }
-    }
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//
+/**
+ *  buffer header callback function for camera control
+ *
+ *  Callback will dump buffer data to the specific file
+ *
+ * @param port Pointer to port from which callback originated
+ * @param buffer mmal buffer header pointer
+ */
+static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer)
+{
+	fprintf(stderr, "CCC\n" );
+	
+   if (buffer->cmd == MMAL_EVENT_PARAMETER_CHANGED)
+   {
+   }
+   else
+   {
+      fprintf(stderr, "Received unexpected camera control callback event, 0x%08x", buffer->cmd);
+   }
+
+   mmal_buffer_header_release(buffer);
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -119,7 +148,7 @@ static void camera_video_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T
 
     //if(1){
     if(userdata->motion > 0){   
-      MMAL_BUFFER_HEADER_T *output_buffer = mmal_queue_get(userdata->encoder_input_pool->queue);
+      MMAL_BUFFER_HEADER_T *output_buffer = mmal_queue_timedwait(userdata->encoder_input_pool->queue, 5000);
       if(output_buffer){
 	  
 	  /*if( (CALC_FPS) && (frame_count % (VIDEO_FPS*2) == 0) )
@@ -135,6 +164,10 @@ static void camera_video_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T
         if (mmal_port_send_buffer(userdata->encoder_input_port, output_buffer) != MMAL_SUCCESS) {
           fprintf(stderr, "ERROR: Unable to send buffer \n");
         }
+      }
+      else
+      {
+        fprintf(stderr, "ERROR: no encoder buffer alllocated \n");
       }
       userdata->motion--;
     }
@@ -216,6 +249,15 @@ int setup_camera(PORT_USERDATA *userdata)
     userdata->camera = camera;
     userdata->camera_video_port = camera->output[MMAL_CAMERA_VIDEO_PORT];
 
+    // Enable the camera, and tell it its control callback function
+   status = mmal_port_enable(camera->control, camera_control_callback);
+
+   if (status != MMAL_SUCCESS)
+   {
+      fprintf(stderr, "Unable to enable control port : error %d", status);
+      return -1;
+   }
+
     camera_preview_port = camera->output[MMAL_CAMERA_PREVIEW_PORT];
     camera_video_port = camera->output[MMAL_CAMERA_VIDEO_PORT];
     camera_still_port = camera->output[MMAL_CAMERA_CAPTURE_PORT];
@@ -272,7 +314,8 @@ int setup_camera(PORT_USERDATA *userdata)
     format->es->video.frame_rate.den = 1;
 
     camera_video_port->buffer_num = 2;
-    camera_video_port->buffer_size = (format->es->video.width * format->es->video.height * 12 / 8 ) * camera_video_port->buffer_num;
+    //camera_video_port->buffer_size = (format->es->video.width * format->es->video.height * 12 / 8 ) * camera_video_port->buffer_num;
+    camera_video_port->buffer_size = camera_video_port->buffer_size_recommended;
 
     fprintf(stderr, "camera video buffer_size = %d\n", camera_video_port->buffer_size);
     fprintf(stderr, "camera video buffer_num = %d\n", camera_video_port->buffer_num);
@@ -303,9 +346,9 @@ int setup_camera(PORT_USERDATA *userdata)
 
     fill_port_buffer(userdata->camera_video_port, userdata->camera_video_port_pool);
 
-    if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, 1) != MMAL_SUCCESS) {
-        printf("%s: Failed to start capture\n", __func__);
-    }
+    //if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, 1) != MMAL_SUCCESS) {
+    //    printf("%s: Failed to start capture\n", __func__);
+    //}
 
     fprintf(stderr, "camera created\n");
     return 0;
@@ -323,7 +366,7 @@ int setup_encoder(PORT_USERDATA *userdata)
     MMAL_POOL_T *encoder_input_port_pool;
     MMAL_POOL_T *encoder_output_port_pool;
 
-    status = mmal_component_create(MMAL_COMPONENT_DEFAULT_VIDEO_ENCODER, &encoder);
+    status = mmal_component_create(MMAL_COMPONENT_DEFAULT_IMAGE_ENCODER, &encoder);
     if (status != MMAL_SUCCESS) {
         fprintf(stderr, "Error: unable to create preview (%u)\n", status);
         return -1;
@@ -350,8 +393,8 @@ int setup_encoder(PORT_USERDATA *userdata)
     }
 
     // Only supporting H264 at the moment
-    encoder_output_port->format->encoding = MMAL_ENCODING_MJPEG;//MMAL_ENCODING_H264;	// MMAL_ENCODING_MJPEG
-    encoder_output_port->format->bitrate = 15000000;
+    encoder_output_port->format->encoding = MMAL_ENCODING_JPEG;//MMAL_ENCODING_H264;	// MMAL_ENCODING_MJPEG
+    encoder_output_port->format->bitrate = 150000;
 
     encoder_output_port->buffer_size = encoder_output_port->buffer_size_recommended;
 
@@ -365,6 +408,47 @@ int setup_encoder(PORT_USERDATA *userdata)
         encoder_output_port->buffer_num = encoder_output_port->buffer_num_min;
     }
 
+	// -------------------------------------------------------------------------------------
+
+	status = mmal_port_parameter_set_boolean( encoder->output[0], MMAL_PARAMETER_EXIF_DISABLE, MMAL_TRUE ); 
+			
+	if (status != MMAL_SUCCESS)
+		{
+		fprintf(stderr, "Error: unable to set MMAL_PARAMETER_EXIF_DISABLE (%u)", status);
+		}
+	
+	// Set the JPEG quality level
+	int nDesiredJPGQuality = 20;
+	status = mmal_port_parameter_set_uint32(encoder_output_port, MMAL_PARAMETER_JPEG_Q_FACTOR, nDesiredJPGQuality );
+
+	if (status != MMAL_SUCCESS)
+		{
+		fprintf(stderr, "Error: Unable to set JPEG quality (%u)", status);
+		}
+
+	MMAL_PARAMETER_THUMBNAIL_CONFIG_T param_thumb = {{MMAL_PARAMETER_THUMBNAIL_CONFIGURATION, sizeof(MMAL_PARAMETER_THUMBNAIL_CONFIG_T)}, 0, 0, 0, 0};
+
+	/*if ( userdata->m_pRaspiVidState->thumbnailConfig.enable && userdata->m_pRaspiVidState->thumbnailConfig.width > 0 && userdata->m_pRaspiVidState->thumbnailConfig.height > 0 )
+		{
+		fprintf(stderr, "Try to set JPEG thumbnail\n" );
+		
+		// Have a valid thumbnail defined
+		param_thumb.enable = 1;
+		param_thumb.width = userdata->m_pRaspiVidState->thumbnailConfig.width;
+		param_thumb.height = userdata->m_pRaspiVidState->thumbnailConfig.height;
+		param_thumb.quality = userdata->m_pRaspiVidState->thumbnailConfig.quality;
+		}*/
+
+	//status = mmal_port_parameter_set(encoder->control, &param_thumb.hdr);
+	status = mmal_port_parameter_set(encoder->output[0], &param_thumb.hdr);
+
+	if (status != MMAL_SUCCESS)
+		{
+		fprintf(stderr, "Error: Unable to set JPEG thumbnail (%u)\n", status);
+		}
+	
+	// -------------------------------------------------------------------------------------
+			
     // Commit the port changes to the output port    
     status = mmal_port_format_commit(encoder_output_port);
     if (status != MMAL_SUCCESS)
@@ -451,6 +535,12 @@ int main(int argc, char** argv)
     }
 
     vcos_semaphore_create(&userdata.complete_semaphore, "mmal_opencv_video", 0);
+
+    //return -1;
+
+    if (mmal_port_parameter_set_boolean(userdata.camera_video_port, MMAL_PARAMETER_CAPTURE, 1) != MMAL_SUCCESS) {
+        printf("%s: Failed to start capture\n", __func__);
+    }
 
     int count = 0;
 

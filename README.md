@@ -17,5 +17,4 @@ Build
     
     $ make 
     
-    
-2. use as ./mmal_opencv_modect > test.mjpeg
+2. use as ./mmal_mjpeg_test > test.mjpeg
